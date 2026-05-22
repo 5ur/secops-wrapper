@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.44.1] - 2026-05-21
+### Fixed
+- `trigger_github_checks()` 404 error caused by duplicated `projects/locations/instances` path segments in the `runAnalysis` API request URL
+  - The full parser resource name returned by `list_parsers()` is now correctly parsed to extract only the parser ID, which is used to build a relative `endpoint_path`
+
 ## [0.44.0] - 2026-04-29
 ### Added
 - Automatic `x-goog-api-client` header on all API requests for client telemetry and tracing
