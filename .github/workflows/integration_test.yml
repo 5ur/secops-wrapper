@@ -144,13 +144,36 @@ jobs:
                 }
               }
               
-              // Check if commenter is in CODEOWNERS
-              const isAuthorized = 
-                owners.has(commenter) || 
-                Array.from(owners).some(owner => 
-                  owner.includes('/') && 
-                  owner.startsWith(context.repo.owner + '/')
-                );
+              // A commenter is authorized if they are named directly in
+              // CODEOWNERS, or are an active member of a CODEOWNERS team in this
+              // org. The team check MUST verify the commenter's own membership:
+              // the previous code authorized every commenter whenever any
+              // "@org/team" entry was present, regardless of who commented, so a
+              // single team line in CODEOWNERS would let any fork PR author run
+              // this workflow.
+              let isAuthorized = owners.has(commenter);
+              if (!isAuthorized) {
+                for (const owner of owners) {
+                  const slash = owner.indexOf('/');
+                  if (slash < 0) continue;
+                  const org = owner.slice(0, slash);
+                  const team = owner.slice(slash + 1);
+                  if (org !== context.repo.owner) continue;
+                  try {
+                    const membership = await github.rest.teams.getMembershipForUserInOrg({
+                      org,
+                      team_slug: team,
+                      username: commenter,
+                    });
+                    if (membership.data && membership.data.state === 'active') {
+                      isAuthorized = true;
+                      break;
+                    }
+                  } catch (error) {
+                    // 404 (not a member) or missing org-read scope: stay unauthorized.
+                  }
+                }
+              }
               
               // Output authorization result as a simple string
               core.setOutput("authorized", isAuthorized ? "true" : "false");
