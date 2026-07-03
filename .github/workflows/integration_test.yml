@@ -115,7 +115,7 @@ jobs:
             // Verify this is a pull request comment
             if (!context.payload.issue.pull_request) {
               console.log('This comment is not on a pull request. Skipping.');
-              core.setOutput("is_authorized", "false");
+              core.setOutput("authorized", "false");
               return;
             }
             
